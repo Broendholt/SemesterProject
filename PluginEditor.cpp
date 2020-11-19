@@ -273,31 +273,42 @@ void NewProjectAudioProcessorEditor::handleIncomingMidiMessage(juce::MidiInput* 
 void NewProjectAudioProcessorEditor::handleNoteOn(juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity)
 {
     int tmp[6] = { -1, -1, -1, -1, -1, -1 };
-    
-    for (int i = 0; i < sizeof(hChord) / sizeof(hChord[0]); i++) {
+    if (selectedChord != -1) {
+        for (int i = 0; i < sizeof(hChord) / sizeof(hChord[0]); i++) {
 
-        if (hChord[i] != -1) {
-            tmp[i] = midiNoteNumber + hChord[i];
-            audioProcessor.keyOn(midiNoteNumber + hChord[i], int(127 * velocity));
+            if (hChord[i] != -1) {
+                tmp[i] = midiNoteNumber + hChord[i];
+                audioProcessor.keyOn(midiNoteNumber + hChord[i], int(127 * velocity));
+            }
+            else {
+                break;
+            }
         }
-        else {
-            break;
-        }    
     }
+    else {
+        audioProcessor.keyOn(midiNoteNumber, int(127 * velocity));
+    }
+
+    
 
     highlightableKeyboard.setHighlightedChords(tmp);
 }
 
 void NewProjectAudioProcessorEditor::handleNoteOff(juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float /*velocity*/)
 {
-    std::copy(noChord, noChord + 6, pressedChord);
-    for (int i = 0; i < sizeof(hChord) / sizeof(hChord[0]); i++) {
-        if (hChord[i] == -1) {
-            break;
+    if (selectedChord != -1) {
+        std::copy(noChord, noChord + 6, pressedChord);
+        for (int i = 0; i < sizeof(hChord) / sizeof(hChord[0]); i++) {
+            if (hChord[i] == -1) {
+                break;
+            }
+            else {
+                audioProcessor.keyOff(midiNoteNumber + hChord[i]);
+            }
         }
-        else {
-            audioProcessor.keyOff(midiNoteNumber + hChord[i]);
-        }
+    }
+    else {
+        audioProcessor.keyOff(midiNoteNumber);
     }
 
     int tmp[6] = { -1, -1, -1, -1, -1, -1 };
@@ -405,20 +416,27 @@ void NewProjectAudioProcessorEditor::noteController(int chordIndex) {
 
 void NewProjectAudioProcessorEditor::scaleButtonPressed(juce::TextButton* button, int scaleIndex) {
 
-    MajorScale.setColour(MajorScale.buttonColourId, juce::Colours::transparentWhite);
-    MinorScale.setColour(MinorScale.buttonColourId, juce::Colours::transparentWhite);
-    DiminishedScale.setColour(DiminishedScale.buttonColourId, juce::Colours::transparentWhite);
-    AugmentedScale.setColour(AugmentedScale.buttonColourId, juce::Colours::transparentWhite);
-
-    rootNote.setSelectedId(-1, juce::NotificationType::dontSendNotification);
+    if (button != nullptr) {
+        MajorScale.setColour(MajorScale.buttonColourId, juce::Colours::transparentWhite);
+        MinorScale.setColour(MinorScale.buttonColourId, juce::Colours::transparentWhite);
+        DiminishedScale.setColour(DiminishedScale.buttonColourId, juce::Colours::transparentWhite);
+        AugmentedScale.setColour(AugmentedScale.buttonColourId, juce::Colours::transparentWhite);
+    }
     
-    if (selectedScale == scaleIndex) {
+
+    //rootNote.setSelectedId(-1, juce::NotificationType::dontSendNotification);
+    
+    
+    if (selectedScale == scaleIndex && button != nullptr) {
         scaleIndex = -1;
         selectedScale = -1;
-        button->setColour(button->buttonColourId, juce::Colours::transparentWhite);
+        if (button != nullptr) {
+            button->setColour(button->buttonColourId, juce::Colours::transparentWhite);
+        }
+        
     }
     else {
-
+        
         rootNote.setItemEnabled(1, true);   //C
         rootNote.setItemEnabled(2, true);  //C#
         rootNote.setItemEnabled(3, true);   //D
@@ -431,53 +449,66 @@ void NewProjectAudioProcessorEditor::scaleButtonPressed(juce::TextButton* button
         rootNote.setItemEnabled(10, true);  //A
         rootNote.setItemEnabled(11, true); //A#
         rootNote.setItemEnabled(12, true);  //B
-
-        selectedScale = scaleIndex; 
-        button->setColour(button->buttonColourId, juce::Colours::orange);
+        
+        
+        if (button != nullptr) {
+            selectedScale = scaleIndex;
+            button->setColour(button->buttonColourId, juce::Colours::orange);
+        }
     }
 
-    switch (scaleIndex) {
-    case 1:
-        std::copy(majorScale, majorScale + 9, hScale);
-        highlightableKeyboard.showScales(true);
-        break;
-    case 2:
-        std::copy(minorScale, minorScale + 9, hScale);
-        highlightableKeyboard.showScales(true);
-        break;
-    case 3:
-        std::copy(diminishedScale, diminishedScale + 9, hScale);
-        highlightableKeyboard.showScales(true);
-        break;
-    case 4:
-        std::copy(augmentedScale, augmentedScale + 9, hScale);
-        highlightableKeyboard.showScales(true);
-        break;
-    default:
+    if (rootNote.getSelectedId() != 0) {
+        switch (scaleIndex) {
+        case 1:
+            std::copy(majorScale, majorScale + 9, hScale);
+            highlightableKeyboard.showScales(true);
+            break;
+        case 2:
+            std::copy(minorScale, minorScale + 9, hScale);
+            highlightableKeyboard.showScales(true);
+            break;
+        case 3:
+            std::copy(diminishedScale, diminishedScale + 9, hScale);
+            highlightableKeyboard.showScales(true);
+            break;
+        case 4:
+            std::copy(augmentedScale, augmentedScale + 9, hScale);
+            highlightableKeyboard.showScales(true);
+            break;
+        default:
 
-        rootNote.setItemEnabled(1, false);   //C
-        rootNote.setItemEnabled(2, false);  //C#
-        rootNote.setItemEnabled(3, false);   //D
-        rootNote.setItemEnabled(4, false);  //D#
-        rootNote.setItemEnabled(5, false);   //E
-        rootNote.setItemEnabled(6, false);   //F
-        rootNote.setItemEnabled(7, false);  //F#
-        rootNote.setItemEnabled(8, false);   //G
-        rootNote.setItemEnabled(9, false);  //G#
-        rootNote.setItemEnabled(10, false);  //A
-        rootNote.setItemEnabled(11, false); //A#
-        rootNote.setItemEnabled(12, false);  //B
+            rootNote.setItemEnabled(1, false);   //C
+            rootNote.setItemEnabled(2, false);  //C#
+            rootNote.setItemEnabled(3, false);   //D
+            rootNote.setItemEnabled(4, false);  //D#
+            rootNote.setItemEnabled(5, false);   //E
+            rootNote.setItemEnabled(6, false);   //F
+            rootNote.setItemEnabled(7, false);  //F#
+            rootNote.setItemEnabled(8, false);   //G
+            rootNote.setItemEnabled(9, false);  //G#
+            rootNote.setItemEnabled(10, false);  //A
+            rootNote.setItemEnabled(11, false); //A#
+            rootNote.setItemEnabled(12, false);  //B
 
-        highlightableKeyboard.showScales(false);
-        break;
+            highlightableKeyboard.showScales(false);
+            break;
+        }
     }
-
-
+    
+    highlightableKeyboard.setScales(hScale);
+    highlightableKeyboard.setVisible(false);
+    highlightableKeyboard.setVisible(true);
     
 }
 
 void NewProjectAudioProcessorEditor::scaleRootNoteSelected(juce::ComboBox* comboBox) {
     highlightableKeyboard.setScaleRootNote(comboBox->getSelectedId() - 1);
+    highlightableKeyboard.setScales(hScale);
+
+    scaleButtonPressed(nullptr, selectedScale);
+
+    highlightableKeyboard.setVisible(false);
+    highlightableKeyboard.setVisible(true);
 }
 
 void NewProjectAudioProcessorEditor::graphicsController() {

@@ -56,13 +56,7 @@ public:
 
             auto c = Colours::transparentWhite;
 
-            if (isDown) {
-                c = c.overlaidWith(findColour(keyDownOverlayColourId));
-            }
-            else if (isDown || isOver)
-            {
-                c = c.overlaidWith(findColour(mouseOverKeyOverlayColourId));
-            }
+            
 
             if (showChordsVisually) {
                 for (int i = 0; i < sizeof(highlightedChords) / sizeof(highlightedChords[0]); i++) {
@@ -77,25 +71,26 @@ public:
                 }
             }
             else if (showScalesVisually) {
-                for (int i = 0; i < 8; i++) {
-                    for (int j = 0; j < 12; j++) {
-                        for (int k = 0; k < sizeof(scales) / sizeof(scales[0]); k++) {
+                
+                for (int k = 0; k < sizeof(scales) / sizeof(scales[0]); k++) {
 
-                            
-
-                            if (midiNoteNumber == (i * j) + (scaleRootNote + scales[k])){
+                    if (midiNoteNumber == (scaleRootNote + scales[k] + 60)){
                                 
-                                c = juce::Colours::green;
+                        c = juce::Colours::green;
 
-                                repaintNote(midiNoteNumber);
-                                break;
-                            }
-                        }
+                        repaintNote(midiNoteNumber);
+                        break;
                     }
                 }
             }
 
-
+            if (isDown) {
+                c = c.overlaidWith(findColour(keyDownOverlayColourId));
+            }
+            else if (isDown || isOver)
+            {
+                c = c.overlaidWith(findColour(mouseOverKeyOverlayColourId));
+            }
 
 
                 g.setColour(c);
@@ -151,12 +146,7 @@ public:
                 
                 auto c = noteFillColour;
 
-                if (isDown) {
-                    c = c.overlaidWith(findColour(keyDownOverlayColourId));
-                }
-                else if (isOver) {
-                    c = c.overlaidWith(findColour(mouseOverKeyOverlayColourId));
-                }
+                
                 
                 if (showChordsVisually) {
                     for (int i = 0; i < sizeof(highlightedChords) / sizeof(highlightedChords[0]); i++) {
@@ -171,24 +161,25 @@ public:
                     }
                 }
                 else if (showScalesVisually) {
-                    for (int i = 0; i < 8; i++) {
-                        for (int j = 0; j < 12; j++) {
-                            for (int k = 0; k < sizeof(scales) / sizeof(scales[0]); k++) {
 
-                                
+                    for (int k = 0; k < sizeof(scales) / sizeof(scales[0]); k++) {
+                        int test = (scaleRootNote + scales[k] + 60);
+                        if (midiNoteNumber == test) {
 
-                                if (midiNoteNumber == (i * j) + (scaleRootNote + scales[k])) {
+                            c = juce::Colours::green;
 
-                                    c = juce::Colours::green;
-
-                                    repaintNote(midiNoteNumber);
-                                    break;
-                                }
-                            }
+                            repaintNote(midiNoteNumber);
+                            break;
                         }
                     }
                 }
 
+                if (isDown) {
+                    c = c.overlaidWith(findColour(keyDownOverlayColourId));
+                }
+                else if (isOver) {
+                    c = c.overlaidWith(findColour(mouseOverKeyOverlayColourId));
+                }
                 
                 g.setColour(c);
                 g.fillRect(area);
@@ -304,11 +295,10 @@ public:
     
     const int noChord[6] = { 0, -1, -1, -1, -1, -1 };
     
-
-    const int majorScale[9] = {0, 2, 4, 5, 7, 9, 11, 12, -1};
-    const int minorScale[9] = { 0, 3, 4, 5, 7, 9, 10, 12, -1 };
+    const int majorScale[9] = {0, 2, 4, 5, 7, 9, 11, 12, 0};
+    const int minorScale[9] = { 0, 3, 4, 5, 7, 9, 10, 12, 0 };
     const int diminishedScale[9] = { 0, 2, 3, 5, 6, 8, 9, 11, 12 };
-    const int augmentedScale[9] = { 0, 3, 4, 7, 8, 11, 12, -1, -1 };
+    const int augmentedScale[9] = { 0, 3, 4, 7, 8, 11, 12, 0, 0 };
 
     // ===== MIDI STUFF =====
     juce::AudioDeviceManager deviceManager;           // [1]
